@@ -1,0 +1,51 @@
+---
+- hosts: elasticsearch_servers
+  become: true
+  vars:
+    elasticsearch_check: "You Know, for Search"
+# TODO:
+
+
+  tasks:
+  - debug:
+      msg:  "# ===== Starting Elasticsearch installation ... ===== #"
+
+  - name: Install Java packages
+    yum:
+      name: java-1.8.0-openjdk
+      state: latest
+
+  - name: Copy 'elasticsearch.repo' file in '/etc/yum.repos.d/' directory
+    copy:
+      src: ../elasticsearchvm_sync/elasticsearch.repo
+      dest: /etc/yum.repos.d/
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Install Elasticsearch 6.X
+    yum:
+      name: elasticsearch
+      state: latest
+
+  - name: Start Elasticsearch on boot
+    systemd:
+      name: elasticsearch
+      state: started
+      enabled: yes
+
+  - name: Check that Elasticsearch is running
+    uri:
+      url: http://localhost:9200/?pretty
+    async: 300
+    poll: 10
+    register: elasticsearch_http_response
+
+  - name: Print elasticsearch_http_response
+    debug:
+      msg: "{{ elasticsearch_check }} | {{ elasticsearch_http_response.json.tagline }}"
+
+  - name: Print message if Elasticsearch is KO
+    fail:
+      msg: "[KO] Elasticsearch is not running... Please check logs files..."
+    when: ' elasticsearch_check not in elasticsearch_http_response.json.tagline'
