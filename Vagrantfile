@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
  # +------------------+
  config.vm.define "elasticsearchvm" do |elasticsearchvm|
   elasticsearchvm.vm.box = "centos/7"
-  elasticsearchvm.vm.hostname = "elasticsearchvm"
+  elasticsearchvm.vm.hostname = "elk01"
 
   # Disable remote synchronisation of current folder, only add ansible directory
   elasticsearchvm.vm.synced_folder '.', '/vagrant', disabled: true

@@ -40,7 +40,7 @@
     async: 300
     poll: 10
     register: elasticsearch_http_response
-
+l
   - name: Print elasticsearch_http_response
     debug:
       msg: "{{ elasticsearch_check }} | {{ elasticsearch_http_response.json.tagline }}"
