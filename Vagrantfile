@@ -25,7 +25,7 @@ Vagrant.configure("2") do |config|
 
   # Specify the network interface specifications
   # elasticsearchvm.vm.network "public_network", bridge: "wlp3s0"
-  elasticsearchvm.vm.network "private_network", ip: "192.168.100.10"
+  elasticsearchvm.vm.network "private_network", ip: "192.168.200.10"
   
   # Specify name, memory and gui for VM
   elasticsearchvm.vm.provider "virtualbox" do |vb|
@@ -41,9 +41,14 @@ Vagrant.configure("2") do |config|
 
   # Provisionning shell and ansible for the VM
   elasticsearchvm.vm.provision "shell", inline: <<-SHELL
+     sudo su
      yum update
      yum upgrade -y
-     yum install -y vim ansible python python-pip
+     yum install -y epel-release
+     yum install -y vim ansible python python34-setuptools python34-pip-8.1.2-5.el7.noarch pexpect-2.3-11.el7.noarch 
+     easy_install-3.4 pip
+     pip install --upgrade pip
+     pip3 install pexpect
    SHELL
 
   # Run ansible provisionning script to install Elasticsearch

@@ -3,12 +3,14 @@
   become: true
   vars:
     elasticsearch_check: "You Know, for Search"
+    # es_api_basic_auth_username: elastic
+    # es_api_basic_auth_password: -v#DWlSDUL7kRg_xPJYp
+
 # TODO:
-
-
   tasks:
-  - debug:
-      msg:  "# ===== Starting Elasticsearch installation ... ===== #"
+  - name: Start installation of Elasticsearch
+    debug:
+      msg: "############  ELASTICSEARCH INSTALLATION  ############"
 
   - name: Install Java packages
     yum:
@@ -17,7 +19,7 @@
 
   - name: Copy 'elasticsearch.repo' file in '/etc/yum.repos.d/' directory
     copy:
-      src: ../elasticsearchvm_sync/elasticsearch.repo
+      src: ../elasticsearchvm_sync/repo/elasticsearch.repo
       dest: /etc/yum.repos.d/
       owner: root
       group: root
@@ -34,18 +36,131 @@
       state: started
       enabled: yes
 
-  - name: Check that Elasticsearch is running
-    uri:
-      url: http://localhost:9200/?pretty
-    async: 300
-    poll: 10
-    register: elasticsearch_http_response
-l
-  - name: Print elasticsearch_http_response
-    debug:
-      msg: "{{ elasticsearch_check }} | {{ elasticsearch_http_response.json.tagline }}"
+  - name: Copy Elasticsearch conf file
+    copy:
+      src: ../elasticsearchvm_sync/conf/elasticsearch.yml
+      dest: /etc/elasticsearch
+      owner: root
+      group: elasticsearch
+      mode: 0660
 
-  - name: Print message if Elasticsearch is KO
-    fail:
-      msg: "[KO] Elasticsearch is not running... Please check logs files..."
-    when: ' elasticsearch_check not in elasticsearch_http_response.json.tagline'
+  - name: Restart Elasticsearch
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: elasticsearch
+
+
+  # - name: Check that Elasticsearch is running
+  #   uri:
+  #     url: http://localhost:9200/?pretty
+  #   async: 300
+  #   poll: 10
+  #   register: elasticsearch_http_response
+
+  # - name: Print elasticsearch_http_response
+  #   debug:
+  #     msg: "{{ elasticsearch_check }} | {{ elasticsearch_http_response.json.tagline }}"
+
+  # - name: Print message if Elasticsearch is KO
+  #   fail:
+  #     msg: "[KO] Elasticsearch is not running... Please check logs files..."
+  #   when: ' elasticsearch_check not in elasticsearch_http_response.json.tagline'
+
+##########################################################################################
+
+  - name: Start installation of Kibana
+    debug:
+      msg: "############  KIBANA INSTALLATION  ############"
+
+  - name: Copy 'kibana.repo' file in '/etc/yum.repos.d/' directory
+    copy:
+      src: ../elasticsearchvm_sync/repo/kibana.repo
+      dest: /etc/yum.repos.d/
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Install Kibana 6.X
+    yum:
+      name: kibana
+      state: latest
+
+  - name: Start Kibana on boot
+    systemd:
+      name: kibana
+      state: started
+      enabled: yes
+
+  - name: Copy Kibana conf file
+    copy:
+      src: ../elasticsearchvm_sync/conf/kibana.yml
+      dest: /etc/kibana
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Restart Kibana
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: kibana
+
+# Do the chmod for changepython.sh script
+
+  - name: Change python to python3
+    script: ../elasticsearchvm_sync/scripts/topython3.sh
+
+
+##########################################################################################
+
+  - name: Install X-Pack into Elasticsearch
+    expect:
+      command: /usr/share/elasticsearch/bin/elasticsearch-plugin install x-pack
+      responses:
+        (?i)[y/N]: "y"
+      timeout: 200
+
+  - name: Change python to python2
+    script: ../elasticsearchvm_sync/scripts/topython2.sh
+
+  - name: Pause until elastic is up
+    pause:
+      minutes: 1
+
+  - name: Restart Elasticsearch
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: elasticsearch
+
+  - name: Pause until elastic is up
+    pause:
+      minutes: 2
+
+  - name: Change python to python3
+    script: ../elasticsearchvm_sync/scripts/topython3.sh
+
+  - name: Generate passwords
+    expect:
+      command: /usr/share/elasticsearch/bin/x-pack/setup-passwords auto
+      responses:
+        (?i)[y/N]: "y"
+    register: elk_passwords
+
+  - name: Change python to python2
+    script: ../elasticsearchvm_sync/scripts/topython2.sh
+
+  - name: Copy password to file
+    copy: 
+      content: "{{ elk_passwords }}"
+      dest: "/elasticsearchvm/secrets/passwd_response"
+      force: yes
+
+  - name: Parse Kibana password
+    script: ../elasticsearchvm_sync/scripts/return_passwords.sh
+    register: passwd_formatted
+
+  - name: Print Kibana password
+    debug:
+      msg: "=== Passwords === \n {{ passwd_formatted.stdout }}"
