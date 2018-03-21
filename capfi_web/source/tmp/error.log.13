@@ -1,0 +1,3 @@
+[Fri Dec 02 06:25:02.773379 2016] [mpm_prefork:notice] [pid 420] AH00163: Apache/2.4.10 (Debian) OpenSSL/1.0.1t configured -- resuming normal operations
+[Fri Dec 02 06:25:02.773407 2016] [core:notice] [pid 420] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Dec 03 06:25:02.578140 2016] [mpm_prefork:notice] [pid 420] AH00171: Graceful restart requested, doing restart
