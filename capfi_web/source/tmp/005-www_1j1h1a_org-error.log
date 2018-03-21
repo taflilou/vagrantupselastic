@@ -1,3 +1,0 @@
-[Thu Dec 15 06:25:03.009842 2016] [ssl:warn] [pid 420] AH01909: website_1j1h1a:443:0 server certificate does NOT include an ID which matches the server name
-[Thu Dec 15 10:27:19.967275 2016] [:error] [pid 12753] [client 5.45.64.92:60434] script '/var/www/005-www_1j1h1a_org/htdocs/wp-login.php' not found or unable to stat
-[Thu Dec 15 10:27:30.483317 2016] [:error] [pid 12599] [client 5.45.64.92:61105] script '/var/www/005-www_1j1h1a_org/htdocs/wp-login.php' not found or unable to stat
