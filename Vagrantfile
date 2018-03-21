@@ -31,12 +31,16 @@ Vagrant.configure("2") do |config|
   elasticsearchvm.vm.provider "virtualbox" do |vb|
     vb.name = "elasticsearchvm"
     vb.gui = true
-    vb.memory = 1024
+    vb.memory = 2048
+    #vb.memory = 1024
 
   # To speed up Vagrant VM
 	vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 	vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
 	# -----
+    # Add 2 vCPU
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+    vb.customize ["modifyvm", :id, "--cpus", "2"]   
   end
 
   # Provisionning shell and ansible for the VM
@@ -45,7 +49,7 @@ Vagrant.configure("2") do |config|
      yum update
      yum upgrade -y
      yum install -y epel-release
-     yum install -y vim ansible python python34-setuptools python34-pip-8.1.2-5.el7.noarch pexpect-2.3-11.el7.noarch 
+     yum install -y vim ansible python python34-setuptools python34-pip-8.1.2-5.el7.noarch pexpect-2.3-11.el7.noarch jq
      easy_install-3.4 pip
      pip install --upgrade pip
      pip3 install pexpect

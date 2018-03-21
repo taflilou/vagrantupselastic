@@ -94,8 +94,8 @@
 
   - name: Copy Kibana conf file
     copy:
-      src: ../elasticsearchvm_sync/conf/kibana.yml
-      dest: /etc/kibana
+      src: ../elasticsearchvm_sync/conf/kibana.yml.templ
+      dest: /etc/kibana/kibana.yml
       owner: root
       group: root
       mode: 0644
@@ -153,14 +153,43 @@
 
   - name: Copy password to file
     copy: 
-      content: "{{ elk_passwords }}"
+      # content: "{{ elk_passwords.stdout.split('\n') }}"
+      content: "{{ elk_passwords.stdout }}"
       dest: "/elasticsearchvm/secrets/passwd_response"
       force: yes
 
   - name: Parse Kibana password
-    script: ../elasticsearchvm_sync/scripts/return_passwords.sh
+    #script: ../elasticsearchvm_sync/scripts/return_passwords.sh
+    command: /bin/bash -c /elasticsearchvm/scripts/return_passwords.sh
+
+  - name: Record password
+    command: "cat /elasticsearchvm/secrets/passwd"
     register: passwd_formatted
 
   - name: Print Kibana password
     debug:
-      msg: "=== Passwords === \n {{ passwd_formatted.stdout }}"
+      msg: "=== Passwords === \n {{ passwd_formatted.stdout_lines }}"
+
+  # - name: Get Kibana password
+  #   command: $(cat /elasticsearchvm/secrets/passwd | awk -F "\"" 'NR==2 { print $2 }') > /elasticsearchvm/secrets/kibana_password
+
+  # - name: Set kibana password in kibana.yml file
+  #   command: cd /elasticsearchvm/conf && sed -i.bak s/ELASTICSEARCH_PASSWORD/$(cat /elasticsearchvm/secrets/kibana_password)/g kibana.yml.templ
+
+  - name: Generate kibana.yml with good password file
+    script: ../elasticsearchvm_sync/scripts/getkibanapass.sh
+
+  - name: Copy Kibana conf file
+    copy:
+      src: ../elasticsearchvm_sync/conf/kibana.yml.dest
+      dest: /etc/kibana/kibana.yml
+      owner: root
+      group: root
+      mode: 0644
+      force: yes
+
+  - name: Restart Kibana
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: kibana
